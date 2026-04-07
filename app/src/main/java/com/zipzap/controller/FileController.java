@@ -84,7 +84,7 @@ public class FileController {
             // Or, more realistically, the client (frontend) would directly connect to the
             // peer's IP:Port.
             // If the client downloads *through* this backend, then this logic is fine.
-            try (Socket socket = new Socket("localhost", inviteCode + "dsvsdjvhdsbvsdbus");
+            try (Socket socket = new Socket("localhost", inviteCode);
                     InputStream is = socket.getInputStream()) {
 
                 // Read the custom filename header first
@@ -127,7 +127,7 @@ public class FileController {
                         .body(resource);
             }
         } catch (IOException e) {
-            System.err.println("Error in download endpoint for inviteCode " + inviteCode + ": ");
+            System.err.println("Error in download endpoint for inviteCode " + inviteCode + ": " + e.getMessage());
             // Clean up temp file if download failed mid-process
             if (tempDownloadedFile != null && tempDownloadedFile.exists()) {
                 tempDownloadedFile.delete();
