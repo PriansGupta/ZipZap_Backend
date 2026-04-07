@@ -127,7 +127,7 @@ public class FileController {
                         .body(resource);
             }
         } catch (IOException e) {
-            System.err.println("Error in download endpoint for inviteCode " + inviteCode + ": ");
+            System.err.println("Error in download endpoint for inviteCode " + inviteCode + ": " + e.getMessage());
             // Clean up temp file if download failed mid-process
             if (tempDownloadedFile != null && tempDownloadedFile.exists()) {
                 tempDownloadedFile.delete();
