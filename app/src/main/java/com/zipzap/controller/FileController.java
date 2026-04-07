@@ -62,7 +62,7 @@ public class FileController {
             response.put("inviteCode", inviteCode);
             return ResponseEntity.ok(response);
         } catch (IOException e) {
-            System.err.println("Error uploading file: ");
+            System.err.println("Error uploading file: " + e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(Map.of("error", -1, "message", "Failed to upload file: " + e.getMessage()));
         }
