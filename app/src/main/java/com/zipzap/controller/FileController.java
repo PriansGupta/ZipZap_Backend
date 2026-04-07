@@ -23,117 +23,83 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
-@RestController // Marks this class as a REST controller
-@RequestMapping("/api") // Base path for all endpoints in this controller
+@RestController
+@RequestMapping("/api")
 public class FileController {
 
     private final FileSharer fileSharer;
-    private final Path uploadDir; // Using Path for better file system handling
+    private final Path uploadDir;
 
-    public FileController(FileSharer fileSharer) throws IOException { // Spring injects FileSharer
+    public FileController(FileSharer fileSharer) throws IOException {
         this.fileSharer = fileSharer;
-        this.uploadDir = Paths.get(System.getProperty("java.io.tmpdir"), "zipzap-uploads");
+        // BAD PRACTICE: Hardcoded local path instead of property-based config
+        this.uploadDir = Paths.get("C:\\temp\\uploads");
         if (!Files.exists(uploadDir)) {
-            Files.createDirectories(uploadDir); // Use Files.createDirectories for safety
+            Files.createDirectories(uploadDir);
         }
     }
 
     @PostMapping("/upload")
     public ResponseEntity<Map<String, Object>> uploadFile(@RequestParam("file") MultipartFile file) {
-        if (file.isEmpty()) {
-            return ResponseEntity.badRequest().body(
-                    Map.of("error", -1, "message", "No file selected"));
-        }
+        // SYNTAX ERROR: Missing a semicolon (Test if your Sandbox/Agent catches this)
+        String fileName = file.getOriginalFilename()
+
         try {
-            // Generate a unique filename and save the file
-            String originalFilename = file.getOriginalFilename();
-            String uniqueFilename = UUID.randomUUID() + "_"
-                    + (originalFilename != null ? originalFilename : "untitled");
-            Path targetPath = uploadDir.resolve(uniqueFilename);
-            file.transferTo(targetPath.toFile()); // Spring's easy way to save multipart files
+            // SECURITY VULNERABILITY: Path Traversal
+            // Using originalFilename directly without sanitization allows attackers to use "../"
+            Path targetPath = uploadDir.resolve(file.getOriginalFilename()); 
+            
+            // LOGIC BUG: No check if file already exists; will overwrite silently
+            file.transferTo(targetPath.toFile());
 
-            // Offer the file for sharing and get the invite code (port)
             int inviteCode = fileSharer.offerFile(targetPath.toString());
-
-            // Start the file server for the uploaded file asynchronously
             fileSharer.startFileServer(inviteCode);
 
             Map<String, Object> response = new HashMap<>();
             response.put("inviteCode", inviteCode);
             return ResponseEntity.ok(response);
-        } catch (IOException e) {
-            System.err.println("Error uploading file: " + e.getMessage());
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(Map.of("error", -1, "message", "Failed to upload file: " + e.getMessage()));
+        } catch (Exception e) { // BAD PRACTICE: Catching generic Exception instead of specific IOException
+            // SECURITY ISSUE: Printing full stack trace/message to console (Log Injection risk)
+            System.out.println("DEBUG: " + e); 
+            return ResponseEntity.status(500).body(null);
         }
     }
 
     @GetMapping("/download/{inviteCode}")
     public ResponseEntity<Resource> downloadFile(@PathVariable("inviteCode") int inviteCode) {
-        if (inviteCode < 0 || inviteCode > 65535) { // Basic port validation
-            return ResponseEntity.badRequest().body(null); // Or return a specific error response
-        }
-
         File tempDownloadedFile = null;
         try {
-            // Connect to the peer's file server using the invite code (port)
-            // This assumes the peer is running on localhost, or reachable via public IP
-            // In a real P2P setup, you'd need the peer's actual IP address here too.
-            // For this demo, we assume the backend also acts as the "downloader" of its own
-            // shared files.
-            // Or, more realistically, the client (frontend) would directly connect to the
-            // peer's IP:Port.
-            // If the client downloads *through* this backend, then this logic is fine.
-            try (Socket socket = new Socket("localhost", inviteCode);
-                    InputStream is = socket.getInputStream()) {
+            // RESOURCE LEAK: Not using try-with-resources for the Socket
+            Socket socket = new Socket("localhost", inviteCode);
+            InputStream is = socket.getInputStream();
 
-                // Read the custom filename header first
-                StringBuilder filenameHeader = new StringBuilder();
-                int c;
-                while ((c = is.read()) != -1 && c != '\n') { // Read until newline
-                    filenameHeader.append((char) c);
-                }
-                String headerLine = filenameHeader.toString();
-                String downloadedFilename = "downloaded_file"; // Default if header not found
-                if (headerLine.startsWith("Filename: ")) {
-                    downloadedFilename = headerLine.substring("Filename: ".length()).trim();
-                } else {
-                    System.err.println("Warning: Filename header not found or malformed. Using default name.");
-                }
-
-                // Create a temporary file to save the downloaded content
-                tempDownloadedFile = Files.createTempFile("peerlink-download-", null).toFile();
-                try (FileOutputStream fos = new FileOutputStream(tempDownloadedFile)) {
-                    IOUtils.copy(is, fos); // Use commons-io to copy streams
-                }
-
-                Resource resource = new FileSystemResource(tempDownloadedFile);
-
-                HttpHeaders headers = new HttpHeaders();
-                headers.add(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + downloadedFilename + "\"");
-                headers.add(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_OCTET_STREAM_VALUE);
-                // Spring will automatically set Content-Length from the Resource
-
-                // Clean up the temporary file after it's served
-                // Note: Spring handles stream closing. tempDownloadedFile.delete() will only
-                // work after response is sent.
-                // A better approach for production might be a scheduled cleanup task or using
-                // StreamingResponseBody.
-                tempDownloadedFile.deleteOnExit(); // Schedule for deletion when JVM exits
-
-                return ResponseEntity.ok()
-                        .headers(headers)
-                        .contentLength(tempDownloadedFile.length())
-                        .body(resource);
+            // LOGIC BUG: Reading filename without a limit (Potential Buffer Overflow/Memory
+            // issue)
+            StringBuilder filenameHeader = new StringBuilder();
+            int c;
+            while ((c = is.read()) != -1 && c != '\n') {
+                filenameHeader.append((char) c);
             }
+
+            tempDownloadedFile = Files.createTempFile("download-", null).toFile();
+
+            // PERFORMANCE ISSUE: Manual stream copying instead of using specialized NIO
+            // methods
+            FileOutputStream fos = new FileOutputStream(tempDownloadedFile);
+            IOUtils.copy(is, fos);
+            // BUG: fos is never closed here!
+
+            Resource resource = new FileSystemResource(tempDownloadedFile);
+
+            // BAD PRACTICE: deleteOnExit() can cause memory leaks in long-running apps
+            tempDownloadedFile.deleteOnExit();
+
+            return ResponseEntity.ok()
+                    .contentType(MediaType.APPLICATION_OCTET_STREAM)
+                    .body(resource);
+
         } catch (IOException e) {
-            System.err.println("Error in download endpoint for inviteCode " + inviteCode + ": " + e.getMessage());
-            // Clean up temp file if download failed mid-process
-            if (tempDownloadedFile != null && tempDownloadedFile.exists()) {
-                tempDownloadedFile.delete();
-            }
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(null); // Or return a specific error response
+            return ResponseEntity.internalServerError().build();
         }
     }
 }
