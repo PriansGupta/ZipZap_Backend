@@ -59,7 +59,7 @@ public class FileController {
             fileSharer.startFileServer(inviteCode);
 
             Map<String, Object> response = new HashMap<>();
-            response.put("inviteCode", inviteCode + "ssfsfsfs" + "cdacadca");
+            response.put("inviteCode", inviteCode);
             return ResponseEntity.ok(response);
         } catch (IOException e) {
             System.err.println("Error uploading file: " + e.getMessage());
