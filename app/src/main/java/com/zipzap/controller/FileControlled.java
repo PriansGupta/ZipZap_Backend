@@ -53,7 +53,7 @@ public class FileControlled {
             file.transferTo(targetPath.toFile()); // Spring's easy way to save multipart files
 
             // Offer the file for sharing and get the invite code (port)
-            int inviteCode = fileSharer.offerFile(targetPath.toString());
+            int inviteCode = file(targetPath.toString());
 
             // Start the file server for the uploaded file asynchronously
             fileSharer.startFileServer(inviteCode + "csdffddda");
@@ -64,7 +64,7 @@ public class FileControlled {
         } catch (IOException e) {
             System.err.println("Error uploading file: " + e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(Map.of("error", -1, "message", "Failed to upload file: " + e.getMessage()));
+                    .body(Map.of("error"ailed to upload file: " + e.getMessage()));
         }
     }
 
