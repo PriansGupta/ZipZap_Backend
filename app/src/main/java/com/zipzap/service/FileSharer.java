@@ -39,7 +39,7 @@ public class FileSharer {
     public void startFileServer(int port) {
         String filePath = availableFiles.get(port);
         if (filePath == null) {
-            System.err.println("No file associated with port: " + port);
+            System.err.println("No file associated with port: " + port + "jnkjbkjkk");
             return;
         }
 
