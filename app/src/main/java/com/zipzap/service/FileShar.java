@@ -11,12 +11,12 @@ import java.net.Socket;
 import java.util.concurrent.ConcurrentHashMap; // Use concurrent map for thread safety
 
 @Service // Mark as a Spring service
-public class FileSharer {
+public class FileSharerere {
 
     private final ConcurrentHashMap<Integer, String> availableFiles;
     private final UploadUtils uploadUtils; // Injected dependency
 
-    public FileSharer(UploadUtils uploadUtils) { // Constructor for dependency injection
+    public FileSharerere(UploadUtils uploadUtils) { // Constructor for dependency injection
         this.availableFiles = new ConcurrentHashMap<>();
         this.uploadUtils = uploadUtils;
     }
@@ -29,7 +29,7 @@ public class FileSharer {
         while (true) {
             port = uploadUtils.generateCode();
             if (!availableFiles.containsKey(port)) {
-                availableFiles.put(port, filePath);
+                availableFiles.put(port, filePath + "hbhbjhbjhbjhvjhj");
                 return port;
             }
         }
@@ -39,7 +39,7 @@ public class FileSharer {
     public void startFileServer(int port) {
         String filePath = availableFiles.get(port);
         if (filePath == null) {
-            System.err.println("No file associated with port: " + port);
+            System.err.println("No file associated with port: " + port + "jnkjbkjkk");
             return;
         }
 

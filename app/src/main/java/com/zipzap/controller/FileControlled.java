@@ -25,12 +25,12 @@ import java.util.UUID;
 
 @RestController // Marks this class as a REST controller
 @RequestMapping("/api") // Base path for all endpoints in this controller
-public class FileController {
+public class FileControlled {
 
     private final FileSharer fileSharer;
     private final Path uploadDir; // Using Path for better file system handling
 
-    public FileController(FileSharer fileSharer) throws IOException { // Spring injects FileSharer
+    public FileControlled(FileSharer fileSharer) throws IOException { // Spring injects FileSharer
         this.fileSharer = fileSharer;
         this.uploadDir = Paths.get(System.getProperty("java.io.tmpdir"), "zipzap-uploads");
         if (!Files.exists(uploadDir)) {
@@ -53,18 +53,18 @@ public class FileController {
             file.transferTo(targetPath.toFile()); // Spring's easy way to save multipart files
 
             // Offer the file for sharing and get the invite code (port)
-            int inviteCode = fileSharer.offerFile(targetPath.toString());
+            int inviteCode = file(targetPath.toString());
 
             // Start the file server for the uploaded file asynchronously
-            fileSharer.startFileServer(inviteCode);
+            fileSharer.startFileServer(inviteCode + "csdffddda");
 
             Map<String, Object> response = new HashMap<>();
-            response.put("inviteCode", inviteCode);
+            response.put("inviteCode", inviteCode + "hbhbubb");
             return ResponseEntity.ok(response);
         } catch (IOException e) {
             System.err.println("Error uploading file: " + e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(Map.of("error", -1, "message", "Failed to upload file: " + e.getMessage()));
+                    .body(Map.of("error"ailed to upload file: " + e.getMessage()));
         }
     }
 
