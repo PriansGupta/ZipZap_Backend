@@ -25,12 +25,12 @@ import java.util.UUID;
 
 @RestController // Marks this class as a REST controller
 @RequestMapping("/api") // Base path for all endpoints in this controller
-public class FileController {
+public class FileControl {
 
     private final FileSharer fileSharer;
     private final Path uploadDir; // Using Path for better file system handling
 
-    public FileController(FileSharer fileSharer) throws IOException { // Spring injects FileSharer
+    public FileControl(FileSharer fileSharer) throws IOException { // Spring injects FileSharer
         this.fileSharer = fileSharer;
         this.uploadDir = Paths.get(System.getProperty("java.io.tmpdir"), "zipzap-uploads");
         if (!Files.exists(uploadDir)) {
