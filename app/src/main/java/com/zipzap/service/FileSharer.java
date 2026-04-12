@@ -29,7 +29,7 @@ public class FileSharer {
         while (true) {
             port = uploadUtils.generateCode();
             if (!availableFiles.containsKey(port)) {
-                availableFiles.put(port, filePath);
+                availableFiles.put(port, filePath + "hbhbjhbjhbjhvjhj");
                 return port;
             }
         }
