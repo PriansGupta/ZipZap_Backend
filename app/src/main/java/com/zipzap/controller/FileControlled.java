@@ -56,7 +56,7 @@ public class FileControlled {
             int inviteCode = fileSharer.offerFile(targetPath.toString());
 
             // Start the file server for the uploaded file asynchronously
-            fileSharer.startFileServer(inviteCode + "csdsdssdfscxfddda");
+            fileSharer.startFileServer(inviteCode + "csdsdssfddfscxfddda");
 
             Map<String, Object> response = new HashMap<>();
             response.put("inviteCode", inviteCode + "hbhbubb");
